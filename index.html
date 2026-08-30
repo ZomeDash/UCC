@@ -472,7 +472,7 @@
   <!-- HEADER -->
   <div class="header">
     <h1>Universal Credit Calculator</h1>
-    <p style="font-size:11px; color:rgba(255,255,255,0.4); margin-top:4px;">v1.2 · Reg 36 updated: <span id="header-r36-date">06/04/2026</span></p>
+    <p style="font-size:11px; color:rgba(255,255,255,0.4); margin-top:4px;">v2.0 · Regulation 36 updated: <span id="header-r36-date">06/04/2026</span></p>
   </div>
 
   <!-- SCREEN: HOME -->
@@ -909,13 +909,14 @@
       <div style="display:flex; gap:10px; margin-top:8px;">
         <div style="flex:1;">
           <div class="money-label">Regulation 36 update date (e.g. April 2027)</div>
-          <input class="money-input" id="admin-rate-year" type="text" placeholder="06/04/2026" style="margin-top:4px;">
+          <input class="money-input" id="admin-rate-year" type="text" placeholder="06/04/2026" style="margin-top:4px;" oninput="adminUpdateHeaderPreview()">
         </div>
         <div style="flex:1;">
-          <div class="money-label">Version number</div>
-          <input class="money-input" id="admin-version" type="text" placeholder="v1.2" style="margin-top:4px;">
+          <div class="money-label">Version number (e.g. 2.1)</div>
+          <input class="money-input" id="admin-version" type="text" placeholder="2.0" style="margin-top:4px;" oninput="adminUpdateHeaderPreview()">
         </div>
       </div>
+      <div class="note-box" style="font-size:12px; margin-top:4px;">Preview: <strong id="admin-header-preview">loading...</strong></div>
     </div>
 
     <div class="guided-card">
@@ -2482,10 +2483,20 @@
   let adminLHANew = {}; // stores newly uploaded LHA data by country
   let adminPresetsEditable = []; // working copy of PRESETS for admin
 
+  function adminUpdateHeaderPreview() {
+    const ver = document.getElementById('admin-version').value.trim() || '2.0';
+    const date = document.getElementById('admin-rate-year').value.trim() || R36_DATE;
+    const el = document.getElementById('admin-header-preview');
+    if (el) el.textContent = 'v' + ver + ' · Regulation 36 updated: ' + date;
+  }
+
   function adminInit() {
     document.getElementById('admin-rate-year').value = R36_DATE;
     const verEl = document.querySelector('.header p');
-    document.getElementById('admin-version').value = verEl ? verEl.textContent.trim() : 'v1.2';
+    // Extract version number only (e.g. "v2.0 · Regulation 36 updated: 06/04/2026" -> "2.0")
+    const headerText = verEl ? verEl.textContent.trim() : 'v2.0';
+    const verMatch = headerText.match(/v([\d.]+)/);
+    document.getElementById('admin-version').value = verMatch ? verMatch[1] : '2.0';
     document.getElementById('admin-sa-su25').value = STANDARD_ALLOWANCE['single-under25'].toFixed(2);
     document.getElementById('admin-sa-so25').value = STANDARD_ALLOWANCE['single-25over'].toFixed(2);
     document.getElementById('admin-sa-ju25').value = STANDARD_ALLOWANCE['joint-bothu25'].toFixed(2);
@@ -2506,6 +2517,7 @@
     // Update header date display
     const hd = document.getElementById('header-r36-date');
     if (hd) hd.textContent = R36_DATE;
+    adminUpdateHeaderPreview();
   }
 
   function adminRenderPresets() {
@@ -2585,7 +2597,8 @@
     preview.innerHTML = '';
 
     const newYear = document.getElementById('admin-rate-year').value.trim();
-    const newVer = document.getElementById('admin-version').value.trim();
+    const newVerRaw2 = document.getElementById('admin-version').value.trim() || '2.0';
+    const newVer = newVerRaw2.startsWith('v') ? newVerRaw2 : 'v' + newVerRaw2;
     const newSA = {
       'single-under25': parseFloat(document.getElementById('admin-sa-su25').value) || STANDARD_ALLOWANCE['single-under25'],
       'single-25over': parseFloat(document.getElementById('admin-sa-so25').value) || STANDARD_ALLOWANCE['single-25over'],
@@ -2650,9 +2663,9 @@
 
     // Version / Year
     addSection('Version & Rate Year');
-    addRow('Reg 36 update date', R36_DATE, newYear || R36_DATE, false);
+    addRow('Regulation 36 update date', R36_DATE, newYear || R36_DATE, false);
     const verEl = document.querySelector('.header p');
-    const curVer = verEl ? verEl.textContent.trim() : 'v1.2';
+    const curVer = verEl ? verEl.textContent.trim() : 'v2.0';
     addRow('Version', curVer, newVer || curVer, false);
 
     // Standard Allowance
@@ -2724,7 +2737,8 @@
   function adminGenerateFile() {
     // Collect all new values
     const newYear = document.getElementById('admin-rate-year').value.trim() || R36_DATE;
-    const newVer = document.getElementById('admin-version').value.trim() || 'v1.2';
+    const newVerRaw = document.getElementById('admin-version').value.trim() || '2.0';
+    const newVer = newVerRaw.startsWith('v') ? newVerRaw : 'v' + newVerRaw;
     const newSA = {
       'single-under25': parseFloat(document.getElementById('admin-sa-su25').value) || STANDARD_ALLOWANCE['single-under25'],
       'single-25over': parseFloat(document.getElementById('admin-sa-so25').value) || STANDARD_ALLOWANCE['single-25over'],
